@@ -221,7 +221,7 @@ export class DocxGeneratorService {
   private formatApiDocs(apiDocs: any[]): Paragraph[] {
     const paragraphs: Paragraph[] = [];
 
-    apiDocs.forEach((doc) => {
+    for (const doc of apiDocs) {
       paragraphs.push(
         new Paragraph({
           text: `Endpoint: ${doc.route}`,
@@ -233,27 +233,124 @@ export class DocxGeneratorService {
         }),
       );
 
-      if (doc.requestDto) {
-        paragraphs.push(new Paragraph({ text: 'Payload:' }));
-        Object.entries(doc.requestDto.fields || {}).forEach(([key, val]) => {
-          paragraphs.push(
-            new Paragraph({ text: `- ${key}: ${val}`, style: 'Courier' }),
-          );
-        });
+      const paramKeys = Object.keys(doc.requestParams || {});
+      if (paramKeys.length > 0) {
+        paragraphs.push(new Paragraph({ text: 'Request Params:' }));
+        for (const key of paramKeys) {
+          const param = doc.requestParams[key];
+          if (param?.fields) {
+            paragraphs.push(
+              new Paragraph({
+                text: `- ${key}: ${param.name}`,
+                style: 'Courier',
+              }),
+            );
+            paragraphs.push(...this.renderFields(param.fields, 2));
+          } else {
+            paragraphs.push(
+              new Paragraph({
+                text: `- ${key}: ${param?.name || 'unknown'} (${param?.type || 'unknown'})`,
+                style: 'Courier',
+              }),
+            );
+          }
+        }
       }
 
-      if (doc.responseDto) {
+      if (doc.responseDto?.fields) {
         paragraphs.push(new Paragraph({ text: 'Response:' }));
-        Object.entries(doc.responseDto.fields || {}).forEach(([key, val]) => {
-          paragraphs.push(
-            new Paragraph({ text: `- ${key}: ${val}`, style: 'Courier' }),
-          );
-        });
+        paragraphs.push(...this.renderFields(doc.responseDto.fields, 1));
       }
 
       paragraphs.push(new Paragraph('')); // spacing
-    });
+    }
 
     return paragraphs;
+  }
+
+  private renderFields(
+    fields: Record<string, any>,
+    indent = 1,
+    seen: Set<string> = new Set(),
+  ): Paragraph[] {
+    const result: Paragraph[] = [];
+
+    for (const [key, val] of Object.entries(fields)) {
+      const prefix = '  '.repeat(indent);
+
+      // Case 1: Plain string (type info)
+      if (typeof val === 'string') {
+        result.push(
+          new Paragraph({
+            text: `${prefix}- ${key}: ${val}`,
+            style: 'Courier',
+          }),
+        );
+        continue;
+      }
+
+      // Case 2: Fully resolved object with name + fields (recurse)
+      if (
+        val &&
+        typeof val === 'object' &&
+        typeof val.name === 'string' &&
+        typeof val.fields === 'object'
+      ) {
+        const signature = `${val.name}-${key}`;
+        if (seen.has(signature)) {
+          result.push(
+            new Paragraph({
+              text: `${prefix}- ${key}: ${val.name} (circular ref)`,
+              style: 'Courier',
+            }),
+          );
+          continue;
+        }
+
+        result.push(
+          new Paragraph({
+            text: `${prefix}- ${key}: ${val.name}`,
+            style: 'Courier',
+          }),
+        );
+        seen.add(signature);
+        result.push(...this.renderFields(val.fields, indent + 1, seen));
+        continue;
+      }
+
+      // Case 3: Raw object (best-effort stringify)
+      // Case 3: Raw object (pretty JSON)
+      if (val && typeof val === 'object') {
+        try {
+          const prettyLines = JSON.stringify(val, null, 2).split('\n');
+          result.push(
+            new Paragraph({ text: `${prefix}- ${key}:`, style: 'Courier' }),
+          );
+          for (const line of prettyLines) {
+            result.push(
+              new Paragraph({ text: `${prefix}  ${line}`, style: 'Courier' }),
+            );
+          }
+        } catch {
+          result.push(
+            new Paragraph({
+              text: `${prefix}- ${key}: [Unserializable Object]`,
+              style: 'Courier',
+            }),
+          );
+        }
+        continue;
+      }
+
+      // Fallback
+      result.push(
+        new Paragraph({
+          text: `${prefix}- ${key}: ${String(val)}`,
+          style: 'Courier',
+        }),
+      );
+    }
+
+    return result;
   }
 }
