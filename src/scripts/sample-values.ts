@@ -1,0 +1,15 @@
+export const MOCK_VALUES: Record<string, any> = {
+  id: 'a1b2c3d4',
+  name: 'John Doe',
+  email: 'johndoe@example.com',
+  contactNumber: '+1234567890',
+  address: '123 Example St',
+  abn: '12345678901',
+  createdAt: '2024-01-01T00:00:00.000Z',
+  updatedAt: '2024-01-01T00:00:00.000Z',
+  avatar: 'https://example.com/avatar.png',
+  role: 'FLEET_MANAGER',
+  password: '********',
+  enable2fa: true,
+  accountNumber: '987654321',
+};

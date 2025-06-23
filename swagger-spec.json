@@ -1,0 +1,46 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/documentation/generate": {
+      "post": {
+        "operationId": "DocumentationController_generateDocumentation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Generate a .docx file for a project folder",
+        "tags": [
+          "Documentation"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "API Documentation",
+    "description": "The API description",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateDocumentationDto": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}
