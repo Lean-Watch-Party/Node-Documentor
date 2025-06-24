@@ -42,9 +42,6 @@ export class DocumentationService {
 
     const parsedData = await this.runGoParser(projectPath);
     const apiDocs = generateApiDoc(projectPath);
-    for (const doc of apiDocs) {
-      console.log(doc);
-    }
     const folderTree = tree(projectPath, {
       exclude: [/node_modules/, /dist/, /\.git/, /output/],
     });
