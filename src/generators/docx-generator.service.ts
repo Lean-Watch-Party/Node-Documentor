@@ -289,6 +289,29 @@ export class DocxGeneratorService {
         continue;
       }
 
+      if (
+        val &&
+        typeof val === 'object' &&
+        val.type === 'enum' &&
+        Array.isArray(val.values)
+      ) {
+        result.push(
+          new Paragraph({
+            text: `${prefix}- ${key}: ${val.name} (enum)`,
+            style: 'Courier',
+          }),
+        );
+        for (const member of val.values) {
+          result.push(
+            new Paragraph({
+              text: `${prefix}  • ${member}`,
+              style: 'Courier',
+            }),
+          );
+        }
+        continue;
+      }
+
       // Case 2: Fully resolved object with name + fields (recurse)
       if (
         val &&

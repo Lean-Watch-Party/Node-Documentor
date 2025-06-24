@@ -91,11 +91,39 @@ function extractTypeFieldsByType(
   const symbol = type.getSymbol();
   const typeName = symbol?.getName() ?? typeText;
 
+  const enumDecl = symbol?.getDeclarations()?.[0];
+  if (enumDecl?.getKind() === SyntaxKind.EnumDeclaration) {
+    const members = (enumDecl as any)
+      .getMembers?.()
+      .map((m: any) => m.getName());
+    return {
+      name: typeName,
+      type: 'enum',
+      values: members,
+    };
+  }
+
   if (visitedTypes.has(typeText)) {
     return { name: typeName, fields: '[Circular Reference]' };
   }
 
   visitedTypes.add(typeText);
+
+  if (
+    type.isStringLiteral() ||
+    type.isNumberLiteral() ||
+    type.isBooleanLiteral()
+  ) {
+    return { name: typeText, type: 'literal', value: typeText };
+  }
+
+  if (type.getSymbol()?.getName() === 'Date') {
+    return { name: 'Date', type: 'primitive' };
+  }
+
+  if (['any', 'unknown', '{}'].includes(typeText.trim())) {
+    return { name: typeText, type: 'primitive' };
+  }
 
   if (
     type.isString() ||
@@ -127,6 +155,27 @@ function extractTypeFieldsByType(
   if (type.getTypeArguments().length > 0) {
     const inner = type.getTypeArguments()[0];
     return extractTypeFieldsByType(project, inner, visitedTypes);
+  }
+
+  if (
+    type.getText().startsWith('{') &&
+    type.isObject() &&
+    type.getProperties().length > 0
+  ) {
+    const fields: Record<string, any> = {};
+    for (const prop of type.getProperties()) {
+      const propDecl = prop.getValueDeclaration();
+      if (!propDecl) continue;
+      const propType = propDecl.getType();
+      const resolved = extractTypeFieldsByType(project, propType, visitedTypes);
+      fields[prop.getName()] = resolved?.fields ? resolved : propType.getText();
+    }
+
+    return {
+      name: typeName,
+      type: 'inlineObject',
+      fields,
+    };
   }
 
   const declaration = symbol?.getDeclarations()?.[0];
