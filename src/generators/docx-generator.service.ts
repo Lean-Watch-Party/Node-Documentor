@@ -15,6 +15,7 @@ import {
   FunctionInfo,
   MethodInfo,
 } from '../common/types';
+import { BorderStyle, TextRun } from 'docx';
 
 @Injectable()
 export class DocxGeneratorService {
@@ -45,42 +46,63 @@ export class DocxGeneratorService {
       sections: [
         {
           children: [
+            // 1. Cover Page
             new Paragraph({
-              text: 'Project Documentation',
+              text: '📘 Project Documentation',
               heading: HeadingLevel.TITLE,
+              spacing: { after: 400 },
+            }),
+            new Paragraph({
+              text: `Project: Project Documentation`,
+              style: 'IntenseQuote',
+            }),
+            new Paragraph({
+              text: `Generated on: ${new Date().toLocaleDateString()}`,
+              style: 'IntenseQuote',
+            }),
+
+            // 2. Table of Contents (on new page)
+            new Paragraph({
+              text: 'Table of Contents',
+              heading: HeadingLevel.HEADING_1,
+              pageBreakBefore: true,
             }),
             new TableOfContents('Table of Contents', {
               hyperlink: true,
               headingStyleRange: '1-3',
             }),
-            new Paragraph({ pageBreakBefore: true }),
 
+            // 3. Folder Structure (on new page)
             new Paragraph({
               text: 'Folder Structure',
               heading: HeadingLevel.HEADING_1,
+              pageBreakBefore: true,
             }),
             new Paragraph({ text: folderTree, style: 'Courier' }),
-            new Paragraph({ pageBreakBefore: true }),
 
+            // 4. Database Schema (on new page)
             new Paragraph({
               text: 'Database Schema',
               heading: HeadingLevel.HEADING_1,
+              pageBreakBefore: true,
             }),
             ...erdDiagramBlock,
             ...this.formatDatabaseTables(data.entities),
-            new Paragraph({ pageBreakBefore: true }),
 
+            // 5. Class & Function Details (on new page)
             new Paragraph({
               text: 'Class & Function Details',
               heading: HeadingLevel.HEADING_1,
+              pageBreakBefore: true,
             }),
             ...this.formatClasses(data.classes),
             ...this.formatFunctions(data.functions),
 
-            new Paragraph({ pageBreakBefore: true }),
+            // 6. API Endpoints (on new page)
             new Paragraph({
               text: 'API Endpoints',
               heading: HeadingLevel.HEADING_1,
+              pageBreakBefore: true,
             }),
             ...this.formatApiDocs(apiDocs),
           ],
@@ -150,6 +172,22 @@ export class DocxGeneratorService {
         new Table({
           rows: tableRows,
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+            bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+            left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+            right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+            insideHorizontal: {
+              style: BorderStyle.SINGLE,
+              size: 1,
+              color: '000000',
+            },
+            insideVertical: {
+              style: BorderStyle.SINGLE,
+              size: 1,
+              color: '000000',
+            },
+          },
         }),
       );
     });
