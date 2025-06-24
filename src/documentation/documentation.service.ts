@@ -30,7 +30,7 @@ export class DocumentationService {
   ) {
     const relativePath = this.configService.get<string>(
       'GO_PARSER_PATH',
-      './parser-go/go-parser',
+      './parser-go/go-parser-nest-typeorm',
     );
     this.goParserExecutablePath = path.resolve(process.cwd(), relativePath);
   }
